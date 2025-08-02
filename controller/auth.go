@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"main/config"
 	"main/models"
+	"main/utils"
 	"net/http"
 )
 
@@ -16,7 +17,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Basic validations
+	// Field validations
 	if user.FirstName == "" {
 		http.Error(w, "First name is required", http.StatusBadRequest)
 		return
@@ -29,7 +30,7 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Email is required", http.StatusBadRequest)
 		return
 	}
-	if user.Email != "" {
+	if !utils.IsValidEmail(user.Email) {
 		http.Error(w, "Invalid email format", http.StatusBadRequest)
 		return
 	}
@@ -55,9 +56,16 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Hash password
+	hashedPassword, err := utils.HashPassword(user.Password)
+	if err != nil {
+		http.Error(w, "Failed to hash password", http.StatusInternalServerError)
+		return
+	}
+
 	// Insert into database
 	insertQuery := `INSERT INTO Users (FirstName, LastName, Email, PasswordHash) VALUES (@p1, @p2, @p3, @p4)`
-	_, err = config.DB.Exec(insertQuery, user.FirstName, user.LastName, user.Email, user.Password)
+	_, err = config.DB.Exec(insertQuery, user.FirstName, user.LastName, user.Email, hashedPassword)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
