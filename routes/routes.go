@@ -6,8 +6,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func RegisterRoute() *mux.Router {
+func AppRoute() *mux.Router {
+
+	apiEndPoints := "/api/v1/"
+
 	route := mux.NewRouter()
-	route.HandleFunc("/register", controllers.RegisterUser).Methods("POST")
+
+	route.HandleFunc(apiEndPoints+"auth/register", controllers.RegisterUser).Methods("POST")
 	return route
 }
