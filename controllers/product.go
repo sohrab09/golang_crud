@@ -95,7 +95,7 @@ func GetProduct(w http.ResponseWriter, r *http.Request) {
 
 	if id == "" {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusBadRequest) // <--- add this
+		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]interface{}{
 			"message": "Product ID is required",
 			"status":  http.StatusBadRequest,
@@ -123,6 +123,61 @@ func GetProduct(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{
 		"message": "Product fetched successfully",
+		"product": product,
+		"status":  http.StatusOK,
+	})
+}
+
+func UpdateProduct(w http.ResponseWriter, r *http.Request) {
+	// Get product ID from URL path parameter
+	params := mux.Vars(r)
+	id := params["id"]
+
+	if id == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Product ID is required",
+			"status":  http.StatusBadRequest,
+			"error":   true,
+		})
+		return
+	}
+
+	// Fetch product from DB
+	var product models.Product
+	query := "SELECT Id, Name, Description, Price, CreatedAt FROM Products WHERE Id = @p1"
+	err := config.DB.QueryRow(query, id).Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.CreatedAt)
+	if err != nil {
+		// return json response
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Product not found",
+			"status":  http.StatusNotFound,
+			"error":   true,
+		})
+		return
+	}
+
+	// Decode request
+	err = json.NewDecoder(r.Body).Decode(&product)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to update product: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Update product in DB
+	query = "UPDATE Products SET Name = @p1, Description = @p2, Price = @p3 WHERE Id = @p4"
+	_, err = config.DB.Exec(query, product.Name, product.Description, product.Price, product.ID)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to update product: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Return response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Product updated successfully",
 		"product": product,
 		"status":  http.StatusOK,
 	})
