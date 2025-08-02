@@ -18,6 +18,7 @@ func AppRoute() *mux.Router {
 
 	// Products Routes
 	route.HandleFunc(api+"add-product", controllers.CreateProduct).Methods("POST")
+	route.HandleFunc(api+"get-all-products", controllers.GetAllProducts).Methods("GET")
 
 	return route
 }

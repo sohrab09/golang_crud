@@ -55,3 +55,33 @@ func CreateProduct(w http.ResponseWriter, r *http.Request) {
 		"status":  http.StatusOK,
 	})
 }
+
+func GetAllProducts(w http.ResponseWriter, r *http.Request) {
+	// Fetch products from DB
+	var products []models.Product
+	query := "SELECT Id, Name, Description, Price, CreatedAt FROM Products"
+	rows, err := config.DB.Query(query)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to fetch products: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var product models.Product
+		err := rows.Scan(&product.ID, &product.Name, &product.Description, &product.Price, &product.CreatedAt)
+		if err != nil {
+			http.Error(w, fmt.Sprintf("Failed to scan product: %v", err), http.StatusInternalServerError)
+			return
+		}
+		products = append(products, product)
+	}
+
+	// Return response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message":  "Products fetched successfully",
+		"products": products,
+		"status":   http.StatusOK,
+	})
+}
