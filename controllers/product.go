@@ -182,3 +182,35 @@ func UpdateProduct(w http.ResponseWriter, r *http.Request) {
 		"status":  http.StatusOK,
 	})
 }
+
+func DeleteProduct(w http.ResponseWriter, r *http.Request) {
+	// Get product ID from URL path parameter
+	params := mux.Vars(r)
+	id := params["id"]
+
+	if id == "" {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"message": "Product ID is required",
+			"status":  http.StatusBadRequest,
+			"error":   true,
+		})
+		return
+	}
+
+	// Delete product from DB
+	query := "DELETE FROM Products WHERE Id = @p1"
+	_, err := config.DB.Exec(query, id)
+	if err != nil {
+		http.Error(w, fmt.Sprintf("Failed to delete product: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	// Return response
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"message": "Product deleted successfully",
+		"status":  http.StatusOK,
+	})
+}
