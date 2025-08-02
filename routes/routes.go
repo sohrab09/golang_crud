@@ -1,6 +1,8 @@
 package routes
 
 import (
+	controllers "main/controller"
+
 	"github.com/gorilla/mux"
 )
 
