@@ -1,17 +1,19 @@
 package routes
 
 import (
-	controllers "main/controller"
+	controllers "main/controllers"
 
 	"github.com/gorilla/mux"
 )
 
 func AppRoute() *mux.Router {
 
-	apiEndPoints := "/api/v1/"
+	api := "/api/v1/"
 
 	route := mux.NewRouter()
 
-	route.HandleFunc(apiEndPoints+"auth/register", controllers.RegisterUser).Methods("POST")
+	route.HandleFunc(api+"auth/register", controllers.RegisterUser).Methods("POST")
+	route.HandleFunc(api+"auth/login", controllers.LoginUser).Methods("POST")
+
 	return route
 }

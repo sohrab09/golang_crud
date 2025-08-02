@@ -85,3 +85,54 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(response)
 }
+
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	var credentials struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	// Decode request
+	err := json.NewDecoder(r.Body).Decode(&credentials)
+	if err != nil || credentials.Email == "" || credentials.Password == "" {
+		http.Error(w, "Invalid login input", http.StatusBadRequest)
+		return
+	}
+
+	// Fetch user from DB
+	var user models.User
+	row := config.DB.QueryRow("SELECT Id, FirstName, LastName, Email, PasswordHash FROM Users WHERE Email = @p1", credentials.Email)
+	err = row.Scan(&user.ID, &user.FirstName, &user.LastName, &user.Email, &user.Password)
+
+	if err != nil {
+		response := map[string]interface{}{
+			"message": "User not found",
+			"status":  http.StatusNotFound,
+			"error":   true,
+		}
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(response)
+
+		return
+	}
+
+	// Compare password
+	if !utils.CheckPasswordHash(credentials.Password, user.Password) {
+		http.Error(w, "Incorrect password", http.StatusUnauthorized)
+		return
+	}
+
+	// Return success
+	response := map[string]interface{}{
+		"message": "Login successful",
+		"user": map[string]string{
+			"firstName": user.FirstName,
+			"lastName":  user.LastName,
+			"email":     user.Email,
+		},
+		"status": http.StatusOK,
+		"error":  false,
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
