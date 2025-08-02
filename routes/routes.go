@@ -12,8 +12,12 @@ func AppRoute() *mux.Router {
 
 	route := mux.NewRouter()
 
+	// Users Routes
 	route.HandleFunc(api+"auth/register", controllers.RegisterUser).Methods("POST")
 	route.HandleFunc(api+"auth/login", controllers.LoginUser).Methods("POST")
+
+	// Products Routes
+	route.HandleFunc(api+"add-product", controllers.CreateProduct).Methods("POST")
 
 	return route
 }
